@@ -1,4 +1,6 @@
-public class MultiMat {
+import java.util.stream.IntStream;
+
+public class MultiMatParallel {
     private static final int MAX = 500;
 
     public static void main(String[] args) {
@@ -14,14 +16,16 @@ public class MultiMat {
             a[i][i] = 1;
         }
 
-        for (int i = 0; i < MAX; i++) {
-            for (int j = 0; j < MAX; j++) {
-                c[i][j] = 0;
-                for (int k = 0; k < MAX; k++) {
-                    c[i][j] += a[i][k] * b[k][j];
-                }
-            }
-        }
+        IntStream.range(0, MAX)
+                 .parallel()
+                 .forEach(i -> {
+                     for (int j = 0; j < MAX; j++) {
+                         c[i][j] = 0; 
+                         for (int k = 0; k < MAX; k++) {
+                             c[i][j] += a[i][k] * b[k][j];
+                         }
+                     }
+                 });
 
         for (int i = 0; i < MAX; i++) {
             for (int j = 0; j < MAX; j++) {
