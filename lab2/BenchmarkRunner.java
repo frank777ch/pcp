@@ -22,7 +22,7 @@ public class BenchmarkRunner {
 
     public static void main(String[] args) {
         
-        int[] inputSizes = {100, 200, 300, 500};
+        int[] inputSizes = {1000000, 2000000, 3000000, 5000000};
         
         final int MAX_NUMBER = 50_000_000;
         final int MIN_NUMBER = 40_000_000;
