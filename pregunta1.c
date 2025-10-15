@@ -1,45 +1,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <time.h>
 
-#define N 500
+#define N 2000
 
-void prodmv_paralelo(double a[N], double c[N], double B[N][N]) {
-    #pragma omp parallel for
-    for (int i = 0; i < N; i++) {
-        double sum = 0;
-        for (int j = 0; j < N; j++) {
+/**
+ * Función que implementa el producto matriz-vector en paralelo.
+ * "a": Vector de salida (resultado).
+ * "B": Matriz de entrada.
+ * "c": Vector de entrada.
+ */
+void prodmvp(double a[N], double c[N], double B[N][N]) {
+    // Declaración de variables para los bucles y la suma.
+    int i, j;
+    double sum;
+
+    #pragma omp parallel for private(j, sum)
+    for (i = 0; i < N; i++) {
+        // Cada hilo inicializa su propia copia de 'sum' a 0.
+        sum = 0.0;
+        
+        // Cada hilo ejecuta este bucle interno para las filas 'i' que le fueron asignadas.
+        for (j = 0; j < N; j++) {
             sum += B[i][j] * c[j];
         }
+        
+        // No hay condición de carrera aquí, porque aunque 'a' es un arreglo compartido,
+        // cada hilo escribe en una posición diferente y única (a[i]).
         a[i] = sum;
     }
 }
 
-int main() {
-    static double matriz_B[N][N];
-    static double vector_c[N];
-    static double vector_a[N];
 
-    for (int i = 0; i < N; i++) {
-        vector_c[i] = (double)(i + 1);
-        for (int j = 0; j < N; j++) {
-            matriz_B[i][j] = (double)(i + j);
+int main() {
+    // Se asigna memoria estáticamente para la matriz y los vectores.
+    static double B[N][N], c[N], a[N];
+    int i, j;
+
+    // Se inicializa la semilla para generar números aleatorios.
+    srand(time(NULL));
+
+    // Se llenan la matriz B y el vector c con valores aleatorios entre 0 y 9.
+    for (i = 0; i < N; i++) {
+        c[i] = rand() % 10;
+        for (j = 0; j < N; j++) {
+            B[i][j] = rand() % 10;
         }
     }
-
-    printf("Realizando la multiplicación Matriz-Vector en paralelo...\n");
     
-    double t_inicio = omp_get_wtime();
+    // --- Medición de tiempo ---
+    double start_time = omp_get_wtime();
 
-    prodmv_paralelo(vector_a, vector_c, matriz_B);
+    // Se llama a la función paralela para realizar el cálculo.
+    prodmvp(a, c, B);
 
-    double t_fin = omp_get_wtime();
+    double end_time = omp_get_wtime();
 
-    printf("Calculo finalizado en %f segundos.\n", t_fin - t_inicio);
+    // Se imprime el tiempo de ejecución.
+    printf("Calculo completado en %f segundos.\n", end_time - start_time);
 
-    printf("\nAlgunos resultados:\n");
-    printf("a[0] = %f\n", vector_a[0]);
-    printf("a[%d] = %f\n", N-1, vector_a[N-1]);
+    // Se imprime una pequeña porción del resultado para verificar que se ejecutó.
+    printf("\nPrimeros 5 elementos del vector resultado 'a':\n");
+    for(i = 0; i < 5; i++) {
+        printf("a[%d] = %f\n", i, a[i]);
+    }
 
     return 0;
 }
